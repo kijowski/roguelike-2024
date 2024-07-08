@@ -12,11 +12,7 @@ export class GameMap {
     for (let rowNo = 0; rowNo < height; rowNo++) {
       const row = new Array(width);
       for (let colNo = 0; colNo < width; colNo++) {
-        if (colNo > 20 && colNo < 24 && rowNo > 20 && rowNo < 29) {
-          row[colNo] = { ...WALL };
-        } else {
-          row[colNo] = { ...FLOOR };
-        }
+        row[colNo] = { ...WALL };
       }
       this.tiles[rowNo] = row;
     }
@@ -40,27 +36,14 @@ export class GameMap {
       }
     }
   }
-}
-class RectangularRoom {
-  tiles: Tile[][];
-  constructor(
-    public x: number,
-    public y: number,
-    public width: number,
-    public height: number,
-  ) {
-    this.tiles = new Array(height);
-  }
 
-  buildRoom() {
-    for (let y = 0; y < this.height; y++) {
-      const row = new Array(this.width);
-      for (let x = 0; x < this.width; x++) {
-        const isWall =
-          x === 0 || x === this.width - 1 || y === 0 || y === this.height - 1;
-        row[x] = isWall ? { ...WALL } : { ...FLOOR };
+  addRoom(x: number, y: number, tiles: Tile[][]) {
+    for (let row = y; row < y + tiles.length; row++) {
+      const mapRow = this.tiles[row];
+      const roomRow = tiles[row - y];
+      for (let col = x; col < x + roomRow.length; col++) {
+        mapRow[col] = roomRow[col - x];
       }
-      this.tiles[y] = row;
     }
   }
 }

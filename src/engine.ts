@@ -1,19 +1,19 @@
 import * as rot from "rot-js";
 import { handleInput } from "./input-handler";
 import { Entity } from "./entity";
+import { generateDungeon } from "./procgen";
 import { GameMap } from "./map";
 
 export class Engine {
   static readonly Height = 50;
   static readonly Width = 50;
+  gameMap: GameMap;
 
   display = new rot.Display({
     width: Engine.Width,
     height: Engine.Height,
     forceSquareRatio: true,
   });
-
-  gameMap = new GameMap(50, 50, this.display);
 
   constructor(
     private entities: Entity[],
@@ -25,6 +25,16 @@ export class Engine {
     window.addEventListener("keydown", (event) => {
       this.update(event);
     });
+
+    this.gameMap = generateDungeon(
+      Engine.Width,
+      Engine.Height,
+      8,
+      4,
+      12,
+      this.player,
+      this.display,
+    );
 
     this.render();
   }
