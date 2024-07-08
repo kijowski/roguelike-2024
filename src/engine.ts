@@ -1,16 +1,24 @@
 import * as rot from "rot-js";
 import { handleInput } from "./input-handler";
+import { Entity } from "./entity";
+import { GameMap } from "./map";
 
 export class Engine {
+  static readonly Height = 50;
+  static readonly Width = 50;
+
   display = new rot.Display({
-    width: 50,
-    height: 50,
+    width: Engine.Width,
+    height: Engine.Height,
     forceSquareRatio: true,
   });
 
-  player = { x: 1, y: 0 };
+  gameMap = new GameMap(50, 50, this.display);
 
-  constructor() {
+  constructor(
+    private entities: Entity[],
+    private player: Entity,
+  ) {
     const container = this.display.getContainer()!;
     document.body.appendChild(container);
 
@@ -21,20 +29,22 @@ export class Engine {
     this.render();
   }
 
-  render() {
-    this.display.draw(this.player.x, this.player.y, "@", "#fff", "#302");
-  }
-
   update(ev: KeyboardEvent) {
     this.display.clear();
+    const action = handleInput(ev);
 
-    const move = handleInput(ev);
-
-    if (move?.kind === "movement") {
-      this.player.x += move.x;
-      this.player.y += move.y;
+    if (action) {
+      action.perform(this, this.player);
     }
 
     this.render();
+  }
+
+  render() {
+    this.gameMap.render();
+
+    for (const entity of this.entities) {
+      this.display.draw(entity.x, entity.y, entity.char, entity.fg, entity.bg);
+    }
   }
 }

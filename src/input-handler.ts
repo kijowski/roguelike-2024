@@ -2,8 +2,23 @@
 //   kind: string;
 // }
 
+import { Engine } from "./engine";
+import { Entity } from "./entity";
+
 export const movement = (x: number, y: number) =>
-  ({ kind: "movement", x, y }) as const;
+  ({
+    kind: "movement",
+    x,
+    y,
+    perform(engine: Engine, entity: Entity) {
+      const x = entity.x + this.x;
+      const y = entity.y + this.y;
+
+      if (!engine.gameMap.isInBounds({ x, y })) return;
+      if (!engine.gameMap.tiles[y][x].walkable) return;
+      entity.move(this);
+    },
+  }) as const;
 
 export type Action = ReturnType<typeof movement>;
 
