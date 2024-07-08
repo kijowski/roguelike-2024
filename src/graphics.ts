@@ -7,17 +7,26 @@ export interface Graphics {
 export interface Tile {
   walkable: boolean;
   transparent: boolean;
-  glyph: Graphics;
+  visible: boolean;
+  seen: boolean;
+  dark: Graphics;
+  light: Graphics;
 }
 
 export const FLOOR: Tile = {
   walkable: true,
   transparent: true,
-  glyph: { char: " ", fg: "$fff", bg: "#000" },
+  visible: false,
+  seen: false,
+  dark: { char: " ", fg: "$fff", bg: "#000" },
+  light: { char: " ", fg: "$fff", bg: "#c8b432" },
 };
 
 export const WALL: Tile = {
   walkable: false,
   transparent: false,
-  glyph: { char: " ", fg: "$fff", bg: "#363b37" },
+  visible: false,
+  seen: false,
+  dark: { char: " ", fg: "$fff", bg: "#363b37" },
+  light: { char: " ", fg: "$fff", bg: "#826e32" },
 };
