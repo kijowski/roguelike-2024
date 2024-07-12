@@ -1,12 +1,15 @@
 import {
   Application,
   Assets,
+  BitmapText,
+  Container,
   Dict,
   Sprite,
   Spritesheet,
   SpritesheetData,
   SpritesheetFrameData,
   Texture,
+  TextureStyle,
   TickerCallback,
 } from "pixi.js";
 import { rng } from "./random";
@@ -23,7 +26,7 @@ export class Tile {
   constructor(
     public flags: TileFlags,
     private colors: { light: string; dark: string; tint: string },
-    private sprite: Sprite,
+    private sprite: Container,
     baseAlpha = 0.1,
   ) {
     this.sprite.width = RenderingEngine.TileSize;
@@ -57,7 +60,6 @@ export class RenderingEngine {
   async setup() {
     this.app = new Application();
     await this.app.init({
-      // resizeTo: window,
       width: 960,
       height: 960,
       antialias: false,
@@ -67,27 +69,57 @@ export class RenderingEngine {
     });
     document.body.appendChild(this.app.canvas);
 
+    TextureStyle.defaultOptions.scaleMode = "nearest";
+
     await Assets.load("classic_roguelike_white.png");
     const texture = Texture.from("classic_roguelike_white.png");
-    texture.source.style.scaleMode = "nearest";
 
     this.spriteSheet = new Spritesheet(texture, parseClasic("clasic"));
     await this.spriteSheet.parse();
 
-    // let lag = 0;
-    // const MS_PER_UPDATE = (1 / 60) * 1000;
-    // this.app.ticker.add((ticker) => {
-    //   const elapsed = ticker.deltaMS;
-    //   // processInput
-    //   lag += elapsed;
+    await Assets.load([
+      "CozetteMini/CozetteMini.png",
+      "CozetteMini/CozetteMini.xml",
+    ]);
 
-    //   while (lag > MS_PER_UPDATE) {
-    //     this.player.update(this);
-    //     this.gameMap.updateFov(this.player);
-    //     lag -= MS_PER_UPDATE;
-    //   }
-    //   this.render(lag / MS_PER_UPDATE); // pass lag / MS_PER_UPDATE
-    // });
+    const text = "Welcome!    ".split("");
+    const bitmapText = new BitmapText({
+      text: text.join(""),
+      style: {
+        fontFamily: "CozetteMini",
+        fontSize: 12,
+      },
+    });
+    // bitmapText.roundPixels = false;
+    // bitmapText.text = "Hey";
+    bitmapText.tint = "#af0";
+    bitmapText.x = 100;
+    bitmapText.y = 100;
+    bitmapText.scale = 2;
+    // bitmapText.resolution = 2;
+    this.app.stage.addChild(bitmapText);
+    let lag = 0;
+    const MS_PER_UPDATE = (1 / 8) * 1000;
+    let idx = 0;
+    this.app.ticker.add((ticker) => {
+      const elapsed = ticker.deltaMS;
+      // processInput
+      lag += elapsed;
+
+      while (lag > MS_PER_UPDATE) {
+        // bitmapText.x += 1;
+        idx += 1;
+        idx = idx % text.length;
+        bitmapText.text = [...text.slice(idx), ...text.slice(0, idx)].join("");
+        // const newText = [...text.slice()];
+        // newText.splice(idx, 1, "_");
+        // bitmapText.text = newText.join("");
+
+        // bitmapText.scale = bitmapText.scale.x + 0.01;
+        // bitmapText.text = lag;
+        lag -= MS_PER_UPDATE;
+      }
+    });
   }
 
   add(sprite: Sprite) {
@@ -110,7 +142,7 @@ export class RenderingEngine {
   }
 
   getTile(name: (typeof RenderingEngine.knownTiles)[number]) {
-    let sprite: Sprite;
+    let sprite: Container;
     switch (name) {
       case "floor":
         const tile = rng.wpick([
@@ -121,7 +153,16 @@ export class RenderingEngine {
           { item: 68, weight: 1 },
         ]);
         sprite = this.getSprite(`clasic:${tile}`);
-        this.add(sprite);
+        this.app.stage.addChild(sprite);
+
+        // sprite = new BitmapText({
+        //   text: "#",
+        //   style: {
+        //     fontFamily: "CozetteVector",
+        //     fontSize: 12,
+        //   },
+        // });
+        // this.app.stage.addChild(sprite);
         return new Tile(
           {
             seen: false,
@@ -134,7 +175,16 @@ export class RenderingEngine {
         );
       case "wall":
         sprite = this.getSprite(`clasic:56`);
-        this.add(sprite);
+        // this.add(sprite);
+
+        // sprite = new BitmapText({
+        //   text: "#",
+        //   style: {
+        //     fontFamily: "CozetteVector",
+        //     fontSize: 12,
+        //   },
+        // });
+        this.app.stage.addChild(sprite);
         return new Tile(
           {
             seen: false,
@@ -164,7 +214,6 @@ function parseClasic(name: string): SpritesheetData {
         sourceSize: { w: 8, h: 8 },
         spriteSourceSize: { x: 0, y: 0, w: 8, h: 8 },
         // anchor: { x: 0.5, y: 0.5 },
-        // anchor: { x: col * 48 + 24, y: row * 48 + 24 },
       };
     }
     // animations[`${name}_${row}`] = frameNames;
