@@ -1,6 +1,6 @@
 import { AnimatedSprite, Sprite, Spritesheet } from "pixi.js";
 import { Action } from "./input-handler";
-import { Engine } from "./engine";
+import { engine } from "./engine";
 import { RenderingEngine } from "./graphics";
 
 export class Entity {
@@ -22,10 +22,10 @@ export class Entity {
     this.actions = [];
   }
 
-  update(engine: Engine) {
+  update() {
     const action = this.actions.pop();
     if (action) {
-      action.perform(engine, this);
+      action.perform(this);
     }
 
     const diffX = this.x - this.displayX;
@@ -87,17 +87,17 @@ export class DisplayComponent {
   }
 }
 
-export function spawnPlayer(x: number, y: number, renderer: RenderingEngine) {
-  const sprite = renderer.getSprite("clasic:141");
+export function spawnPlayer(x: number, y: number) {
+  const sprite = engine.renderer.getSprite("clasic:141");
   sprite.anchor.set(0.5);
-  renderer.add(sprite);
+  engine.renderer.add(sprite);
   return new Entity("player", x, y, false, RenderingEngine.TileSize, sprite);
 }
 
-export function spawnOrc(x: number, y: number, renderer: RenderingEngine) {
-  const sprite = renderer.getSprite("clasic:143");
+export function spawnOrc(x: number, y: number) {
+  const sprite = engine.renderer.getSprite("clasic:143");
   sprite.anchor.set(0.5);
   sprite.tint = "#0f0";
-  renderer.add(sprite);
+  engine.renderer.add(sprite);
   return new Entity("orc", x, y, true, RenderingEngine.TileSize, sprite);
 }

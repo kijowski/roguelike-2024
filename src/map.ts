@@ -1,7 +1,7 @@
 import { FOV } from "rot-js";
-import { RenderingEngine, Tile } from "./graphics";
+import { Tile } from "./graphics";
 import { Entity } from "./entity";
-import { Engine } from "./engine";
+import { engine } from "./engine";
 
 export class GameMap {
   tiles: Tile[][] = new Array(this.height);
@@ -11,14 +11,13 @@ export class GameMap {
   constructor(
     public width: number,
     public height: number,
-    renderer: RenderingEngine,
   ) {
     this.startingPos = { x: 0, y: 0 };
     this.entities = [];
     for (let rowNo = 0; rowNo < height; rowNo++) {
       const row = new Array(width);
       for (let colNo = 0; colNo < width; colNo++) {
-        row[colNo] = renderer.getTile("wall");
+        row[colNo] = engine.renderer.getTile("wall");
       }
       this.tiles[rowNo] = row;
     }
@@ -28,7 +27,7 @@ export class GameMap {
     return x >= 0 && x < this.width && y >= 0 && y < this.height;
   }
 
-  update(engine: Engine) {
+  update() {
     for (const [rowNo, row] of this.tiles.entries()) {
       for (const [colNo, tile] of row.entries()) {
         tile.render(rowNo, colNo);
@@ -36,7 +35,7 @@ export class GameMap {
     }
     for (const entity of this.entities) {
       entity.sprite.visible = this.tiles[entity.y][entity.x].flags.visible;
-      entity.update(engine);
+      entity.update();
     }
   }
 

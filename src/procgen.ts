@@ -1,5 +1,6 @@
+import { engine } from "./engine";
 import { spawnOrc } from "./entity";
-import { RenderingEngine, Tile } from "./graphics";
+import { Tile } from "./graphics";
 import { GameMap } from "./map";
 import { rng } from "./random";
 
@@ -11,7 +12,6 @@ export class RectangularRoom {
     public y: number,
     public width: number,
     public height: number,
-    private engine: RenderingEngine,
   ) {
     this.buildRoom();
   }
@@ -26,7 +26,9 @@ export class RectangularRoom {
           col === 0 ||
           col === this.width - 1;
         rowArr.push(
-          isWall ? this.engine.getTile("wall") : this.engine.getTile("floor"),
+          isWall
+            ? engine.renderer.getTile("wall")
+            : engine.renderer.getTile("floor"),
         );
       }
       this.tiles.push(rowArr);
@@ -65,9 +67,8 @@ export function generateDungeon(
   minSize: number,
   maxSize: number,
   maxMonstersPerRoom: number,
-  renderer: RenderingEngine,
 ) {
-  const dungeon = new GameMap(mapWidth, mapHeight, renderer);
+  const dungeon = new GameMap(mapWidth, mapHeight);
   const rooms: RectangularRoom[] = [];
 
   for (let i = 0; i < maxRooms; i++) {
@@ -77,12 +78,12 @@ export function generateDungeon(
     const x = rng.int(0, mapWidth - width - 1);
     const y = rng.int(0, mapHeight - height - 1);
 
-    const newRoom = new RectangularRoom(x, y, width, height, renderer);
+    const newRoom = new RectangularRoom(x, y, width, height);
     if (rooms.some((r) => r.intersects(newRoom))) {
       continue;
     }
     dungeon.addRoom(newRoom.x, newRoom.y, newRoom.tiles);
-    placeEntitties(newRoom, dungeon, maxMonstersPerRoom, renderer);
+    placeEntitties(newRoom, dungeon, maxMonstersPerRoom);
     rooms.push(newRoom);
   }
 
@@ -93,7 +94,7 @@ export function generateDungeon(
     const room1 = rooms[i];
     const room2 = rooms[i + 1];
     for (let tile of connect(room1, room2)) {
-      dungeon.tiles[tile[1]][tile[0]] = renderer.getTile("floor");
+      dungeon.tiles[tile[1]][tile[0]] = engine.renderer.getTile("floor");
     }
   }
 
@@ -118,7 +119,6 @@ function placeEntitties(
   room: RectangularRoom,
   dungeon: GameMap,
   maxMonsters: number,
-  renderer: RenderingEngine,
 ) {
   const monstersNo = rng.int(0, maxMonsters);
   for (let i = 0; i < monstersNo; i++) {
@@ -126,7 +126,7 @@ function placeEntitties(
     const x = rng.int(bounds.x1 + 1, bounds.x2 - 2);
     const y = rng.int(bounds.y1 + 1, bounds.y2 - 2);
     if (!dungeon.entities.find((entity) => entity.x === x && entity.y === y)) {
-      dungeon.entities.push(spawnOrc(x, y, renderer));
+      dungeon.entities.push(spawnOrc(x, y));
     }
   }
 }

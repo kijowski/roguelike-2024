@@ -8,16 +8,15 @@ export class Engine {
   static readonly Height = 60;
   static readonly Width = 60;
   static readonly MaxEnemiesPerRoom = 3;
-  renderingEngine!: RenderingEngine;
+  renderer!: RenderingEngine;
   gameMap!: GameMap;
   player!: Entity;
 
   constructor() {
-    this.renderingEngine = new RenderingEngine();
-    this.setup();
+    this.renderer = new RenderingEngine();
   }
   async setup() {
-    await this.renderingEngine.setup();
+    await this.renderer.setup();
     window.addEventListener("keydown", (event) => {
       this.input(event);
     });
@@ -29,27 +28,25 @@ export class Engine {
       4,
       12,
       Engine.MaxEnemiesPerRoom,
-      this.renderingEngine,
     );
 
     this.player = spawnPlayer(
       this.gameMap.startingPos.x,
       this.gameMap.startingPos.y,
-      this.renderingEngine,
     );
 
     let lag = 0;
     const MS_PER_UPDATE = (1 / 120) * 1000;
-    this.renderingEngine.addTicker((ticker) => {
+    this.renderer.addTicker((ticker) => {
       const elapsed = ticker.deltaMS;
       // Input is processed in event system
       lag += elapsed;
 
       while (lag > MS_PER_UPDATE) {
-        this.player.update(this);
+        this.player.update();
         // this.handleEnemyTurns();
         this.gameMap.updateFov(this.player);
-        this.gameMap.update(this);
+        this.gameMap.update();
         lag -= MS_PER_UPDATE;
       }
       // Rendering step is implicit
@@ -75,3 +72,5 @@ export class Engine {
     }
   }
 }
+
+export const engine = new Engine();

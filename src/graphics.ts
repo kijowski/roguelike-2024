@@ -122,11 +122,11 @@ export class RenderingEngine {
     });
   }
 
-  add(sprite: Sprite) {
+  add(sprite: Container) {
     this.app.stage.addChild(sprite);
   }
 
-  remove(sprite: Sprite) {
+  remove(sprite: Container) {
     this.app.stage.removeChild(sprite);
   }
 

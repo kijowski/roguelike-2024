@@ -1,4 +1,4 @@
-import { Engine } from "./engine";
+import { engine, Engine } from "./engine";
 import "./style.css";
 
 declare global {
@@ -7,6 +7,7 @@ declare global {
   }
 }
 
-window.addEventListener("DOMContentLoaded", () => {
-  window.engine = new Engine();
+window.addEventListener("DOMContentLoaded", async () => {
+  await engine.setup();
+  window.engine = engine;
 });

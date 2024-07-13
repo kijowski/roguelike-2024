@@ -1,8 +1,8 @@
-import { Engine } from "./engine";
+import { engine } from "./engine";
 import { Entity } from "./entity";
 
 export interface Action {
-  perform: (engine: Engine, entity: Entity) => void;
+  perform: (entity: Entity) => void;
 }
 
 abstract class MovementAction implements Action {
@@ -11,11 +11,11 @@ abstract class MovementAction implements Action {
     protected dy: number,
   ) {}
 
-  abstract perform(engine: Engine, entity: Entity): void;
+  abstract perform(entity: Entity): void;
 }
 
 class WalkAction extends MovementAction {
-  perform(engine: Engine, entity: Entity) {
+  perform(entity: Entity) {
     const { dx, dy } = this;
     const nextx = entity.x + this.dx;
     const nexty = entity.y + this.dy;
@@ -38,7 +38,7 @@ class WalkAction extends MovementAction {
 }
 
 class HitAction extends MovementAction {
-  perform(engine: Engine, entity: Entity) {
+  perform(entity: Entity) {
     const { dx, dy } = this;
     const nextx = entity.x + this.dx;
     const nexty = entity.y + this.dy;
@@ -58,15 +58,15 @@ class HitAction extends MovementAction {
 }
 
 class BumpAction extends MovementAction {
-  perform(engine: Engine, entity: Entity) {
+  perform(entity: Entity) {
     const { dx, dy } = this;
     const nextx = entity.x + this.dx;
     const nexty = entity.y + this.dy;
 
     if (engine.gameMap.entityBlockingWay(nextx, nexty)) {
-      return new HitAction(dx, dy).perform(engine, entity);
+      return new HitAction(dx, dy).perform(entity);
     } else {
-      return new WalkAction(dx, dy).perform(engine, entity);
+      return new WalkAction(dx, dy).perform(entity);
     }
   }
 }
