@@ -1,10 +1,12 @@
 import { FOV } from "rot-js";
 import { RenderingEngine, Tile } from "./graphics";
 import { Entity } from "./entity";
+import { Engine } from "./engine";
 
 export class GameMap {
   tiles: Tile[][] = new Array(this.height);
   startingPos: { x: number; y: number };
+  entities: Entity[];
 
   constructor(
     public width: number,
@@ -12,6 +14,7 @@ export class GameMap {
     renderer: RenderingEngine,
   ) {
     this.startingPos = { x: 0, y: 0 };
+    this.entities = [];
     for (let rowNo = 0; rowNo < height; rowNo++) {
       const row = new Array(width);
       for (let colNo = 0; colNo < width; colNo++) {
@@ -25,11 +28,15 @@ export class GameMap {
     return x >= 0 && x < this.width && y >= 0 && y < this.height;
   }
 
-  render() {
+  update(engine: Engine) {
     for (const [rowNo, row] of this.tiles.entries()) {
       for (const [colNo, tile] of row.entries()) {
         tile.render(rowNo, colNo);
       }
+    }
+    for (const entity of this.entities) {
+      entity.sprite.visible = this.tiles[entity.y][entity.x].flags.visible;
+      entity.update(engine);
     }
   }
 
@@ -52,6 +59,19 @@ export class GameMap {
       return false;
     }
     return this.tiles[y][x].flags.transparent;
+  }
+
+  entityBlockingWay(x: number, y: number) {
+    if (!this.isInBounds({ x, y })) {
+      return false;
+    }
+    return this.entities.find(
+      (entity) => entity.x === x && entity.y === y && entity.blocksMovement,
+    );
+  }
+
+  public get nonPlayerEntities(): Entity[] {
+    return this.entities.filter((e) => e.name !== "player");
   }
 
   updateFov(player: Entity) {

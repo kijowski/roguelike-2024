@@ -6,21 +6,19 @@ import { RenderingEngine } from "./graphics";
 export class Entity {
   public displayX: number;
   public displayY: number;
-  public sprite: Sprite;
   public isMoving = false;
   public actions: Action[];
 
   constructor(
+    public name: string,
     public x: number,
     public y: number,
+    public blocksMovement: boolean,
     private tileScale: number,
-    renderer: RenderingEngine,
+    public sprite: Sprite,
   ) {
     this.displayX = this.x;
     this.displayY = this.y;
-    this.sprite = renderer.getSprite("clasic:141");
-    this.sprite.anchor.set(0.5);
-    renderer.add(this.sprite);
     this.actions = [];
   }
 
@@ -87,4 +85,19 @@ export class DisplayComponent {
     this.sprite.x = (entity.displayX + 0.5) * this.tileScale;
     this.sprite.y = (entity.displayY + 0.5) * this.tileScale;
   }
+}
+
+export function spawnPlayer(x: number, y: number, renderer: RenderingEngine) {
+  const sprite = renderer.getSprite("clasic:141");
+  sprite.anchor.set(0.5);
+  renderer.add(sprite);
+  return new Entity("player", x, y, false, RenderingEngine.TileSize, sprite);
+}
+
+export function spawnOrc(x: number, y: number, renderer: RenderingEngine) {
+  const sprite = renderer.getSprite("clasic:143");
+  sprite.anchor.set(0.5);
+  sprite.tint = "#0f0";
+  renderer.add(sprite);
+  return new Entity("orc", x, y, true, RenderingEngine.TileSize, sprite);
 }
