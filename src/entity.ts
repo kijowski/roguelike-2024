@@ -1,13 +1,16 @@
 import { AnimatedSprite, Sprite, Spritesheet } from "pixi.js";
-import { Action } from "./input-handler";
 import { engine } from "./engine";
 import { RenderingEngine } from "./graphics";
+import { Fighter } from "./components/fighter";
+import { BaseAI, HostileEnemy } from "./components/ai";
+
+const MAX_FRAME = 4;
 
 export class Entity {
   public displayX: number;
   public displayY: number;
-  public isMoving = false;
-  public actions: Action[];
+  // public isMoving = false;
+  public frame: number = 0;
 
   constructor(
     public name: string,
@@ -19,35 +22,57 @@ export class Entity {
   ) {
     this.displayX = this.x;
     this.displayY = this.y;
-    this.actions = [];
   }
 
-  update() {
-    const action = this.actions.pop();
-    if (action) {
-      action.perform(this);
-    }
-
+  render() {
     const diffX = this.x - this.displayX;
     const diffY = this.y - this.displayY;
-    if (diffX !== 0) {
-      this.isMoving = true;
-      this.sprite.angle += (22.5 / 2) * Math.sign(diffX);
-      this.displayX += 0.0625 * Math.sign(diffX);
-    }
-    if (diffY !== 0) {
-      this.isMoving = true;
-      this.sprite.angle += (22.5 / 2) * Math.sign(diffY);
-      this.displayY += 0.0625 * Math.sign(diffY);
+
+    // Diagonal
+    if (diffX !== 0 && diffY !== 0) {
+      this.frame += 1;
+      // this.sprite.angle += (22.5 / 1) * Math.sign(diffX);
+      this.sprite.angle += (90 / 1) * Math.sign(diffX);
+      this.displayX += getPoisitionShift(this.frame) * diffX;
+      this.displayY += getPoisitionShift(this.frame) * diffY;
+    } else if (diffX !== 0) {
+      // console.log(this.isMoving);
+      this.frame += 1;
+      // this.isMoving += 1;
+      // this.sprite.angle += (22.5 / 1) * Math.sign(diffX);
+      this.sprite.angle += (90 / MAX_FRAME) * Math.sign(diffX);
+      // this.displayX += 0.0625 * Math.sign(diffX);
+      this.displayX += getPoisitionShift(this.frame) * diffX;
+    } else if (diffY !== 0) {
+      // this.isMoving += 1;
+      this.frame += 1;
+      // this.sprite.angle += (22.5 / 1) * Math.sign(diffY);
+      this.sprite.angle += (90 / MAX_FRAME) * Math.sign(diffY);
+      // this.displayY += 0.0625 * diffY;
+      this.displayY += getPoisitionShift(this.frame) * diffY;
     }
     this.sprite.x = (this.displayX + 0.5) * this.tileScale;
     this.sprite.y = (this.displayY + 0.5) * this.tileScale;
     this.sprite.height = this.tileScale * 1;
     this.sprite.width = this.tileScale * 1;
-    if (diffX === 0 && diffY === 0 && this.isMoving) {
-      this.isMoving = false;
+    if (Math.abs(diffX) < 0.0001) {
+      this.displayX = this.x;
+    }
+
+    if (Math.abs(diffY) < 0.1) {
+      this.displayY = this.y;
+    }
+
+    if (this.frame >= MAX_FRAME) {
+      this.displayX = this.x;
+      this.displayY = this.y;
+      this.frame = 0;
     }
   }
+}
+
+function getPoisitionShift(_frame: number) {
+  return 0.25;
 }
 
 export class DisplayComponent {
@@ -91,7 +116,16 @@ export function spawnPlayer(x: number, y: number) {
   const sprite = engine.renderer.getSprite("clasic:141");
   sprite.anchor.set(0.5);
   engine.renderer.add(sprite);
-  return new Entity("player", x, y, false, RenderingEngine.TileSize, sprite);
+  return new Actor(
+    "player",
+    x,
+    y,
+    false,
+    RenderingEngine.TileSize,
+    sprite,
+    null,
+    new Fighter(30, 4, 5),
+  );
 }
 
 export function spawnOrc(x: number, y: number) {
@@ -99,5 +133,33 @@ export function spawnOrc(x: number, y: number) {
   sprite.anchor.set(0.5);
   sprite.tint = "#0f0";
   engine.renderer.add(sprite);
-  return new Entity("orc", x, y, true, RenderingEngine.TileSize, sprite);
+  return new Actor(
+    "orc",
+    x,
+    y,
+    true,
+    RenderingEngine.TileSize,
+    sprite,
+    new HostileEnemy(),
+    new Fighter(10, 2, 8),
+  );
+}
+
+export class Actor extends Entity {
+  constructor(
+    public name: string,
+    public x: number,
+    public y: number,
+    public blocksMovement: boolean,
+    tileScale: number,
+    public sprite: Sprite,
+    public ai: BaseAI | null,
+    public fighter: Fighter,
+  ) {
+    super(name, x, y, blocksMovement, tileScale, sprite);
+    this.fighter.entity = this;
+  }
+  get isAlive(): boolean {
+    return !!this.ai || engine.player === this;
+  }
 }

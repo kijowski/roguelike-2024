@@ -1,6 +1,6 @@
 import { FOV } from "rot-js";
 import { Tile } from "./graphics";
-import { Entity } from "./entity";
+import { Actor, Entity } from "./entity";
 import { engine } from "./engine";
 
 export class GameMap {
@@ -27,7 +27,7 @@ export class GameMap {
     return x >= 0 && x < this.width && y >= 0 && y < this.height;
   }
 
-  update() {
+  render() {
     for (const [rowNo, row] of this.tiles.entries()) {
       for (const [colNo, tile] of row.entries()) {
         tile.render(rowNo, colNo);
@@ -35,7 +35,8 @@ export class GameMap {
     }
     for (const entity of this.entities) {
       entity.sprite.visible = this.tiles[entity.y][entity.x].flags.visible;
-      entity.update();
+      // entity.sprite.visible = true;
+      entity.render();
     }
   }
 
@@ -71,6 +72,17 @@ export class GameMap {
 
   public get nonPlayerEntities(): Entity[] {
     return this.entities.filter((e) => e.name !== "player");
+  }
+
+  getActorAtLocation(x: number, y: number): Actor | undefined {
+    return this.actors.find((a) => a.x === x && a.y === y);
+  }
+
+  public get actors(): Actor[] {
+    return this.entities
+      .filter((e) => e instanceof Actor)
+      .map((e) => e as Actor)
+      .filter((e) => e.isAlive);
   }
 
   updateFov(player: Entity) {

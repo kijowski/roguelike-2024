@@ -45,8 +45,8 @@ export class RectangularRoom {
     return {
       x1: this.x,
       y1: this.y,
-      x2: this.x + this.width,
-      y2: this.y + this.height,
+      x2: this.x + this.width - 1,
+      y2: this.y + this.height - 1,
     };
   }
 
@@ -123,8 +123,8 @@ function placeEntitties(
   const monstersNo = rng.int(0, maxMonsters);
   for (let i = 0; i < monstersNo; i++) {
     const bounds = room.getBounds();
-    const x = rng.int(bounds.x1 + 1, bounds.x2 - 2);
-    const y = rng.int(bounds.y1 + 1, bounds.y2 - 2);
+    const x = rng.int(bounds.x1 + 1, bounds.x2 - 1);
+    const y = rng.int(bounds.y1 + 1, bounds.y2 - 1);
     if (!dungeon.entities.find((entity) => entity.x === x && entity.y === y)) {
       dungeon.entities.push(spawnOrc(x, y));
     }

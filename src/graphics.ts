@@ -13,6 +13,7 @@ import {
   TickerCallback,
 } from "pixi.js";
 import { rng } from "./random";
+import { engine } from "./engine";
 
 export interface TileFlags {
   walkable: boolean;
@@ -23,6 +24,7 @@ export interface TileFlags {
 
 export class Tile {
   private baseAlpha: number;
+  private colorOverride: string | null;
   constructor(
     public flags: TileFlags,
     private colors: { light: string; dark: string; tint: string },
@@ -34,6 +36,7 @@ export class Tile {
     this.sprite.tint = this.colors.light;
     this.sprite.alpha = this.baseAlpha = baseAlpha + rng.float(0, 0.2);
     this.sprite.visible = false;
+    this.colorOverride = null;
   }
 
   render(y: number, x: number) {
@@ -47,6 +50,16 @@ export class Tile {
     } else {
       this.sprite.alpha = this.baseAlpha;
     }
+    if (this.colorOverride) {
+      this.sprite.tint = this.colorOverride;
+      // this.colorOverride = null;
+    } else {
+      this.sprite.tint = this.colors.light;
+    }
+  }
+
+  recolor(colorOverride?: string) {
+    this.colorOverride = colorOverride ?? null;
   }
 }
 
@@ -56,6 +69,10 @@ export class RenderingEngine {
 
   app!: Application;
   spriteSheet!: Spritesheet;
+
+  background!: Container;
+  entities!: Container;
+  corpses!: Container;
 
   async setup() {
     this.app = new Application();
@@ -67,6 +84,18 @@ export class RenderingEngine {
       resolution: window.devicePixelRatio || 1,
       background: "#061b27",
     });
+
+    this.background = new Container();
+    this.entities = new Container();
+    this.corpses = new Container();
+
+    this.app.stage.addChild(this.background);
+    this.app.stage.addChild(this.entities);
+    this.app.stage.addChild(this.entities);
+
+    // const glitch = new GlitchFilter({ offset: 100 });
+    // this.app.stage.filters = [glitch];
+
     document.body.appendChild(this.app.canvas);
 
     TextureStyle.defaultOptions.scaleMode = "nearest";
@@ -93,14 +122,15 @@ export class RenderingEngine {
     // bitmapText.roundPixels = false;
     // bitmapText.text = "Hey";
     bitmapText.tint = "#af0";
-    bitmapText.x = 100;
-    bitmapText.y = 100;
+    bitmapText.x = 10;
+    bitmapText.y = 10;
     bitmapText.scale = 2;
     // bitmapText.resolution = 2;
     this.app.stage.addChild(bitmapText);
     let lag = 0;
     const MS_PER_UPDATE = (1 / 8) * 1000;
     let idx = 0;
+
     this.app.ticker.add((ticker) => {
       const elapsed = ticker.deltaMS;
       // processInput
@@ -111,6 +141,14 @@ export class RenderingEngine {
         idx += 1;
         idx = idx % text.length;
         bitmapText.text = [...text.slice(idx), ...text.slice(0, idx)].join("");
+        bitmapText.text =
+          engine.player.fighter.hp > 0
+            ? `HP: ${engine.player.fighter.hp}. x:${engine.player.x}:${engine.player.displayX} y:${engine.player.y}:${engine.player.displayY}`
+            : "DEAD :X";
+        // glitch.offset = Math.max(0, glitch.offset - 10);
+
+        // this.app.stage.scale = this.app.stage.scale.x * 1.01;
+        // this.app.stage.x += 1;
         // const newText = [...text.slice()];
         // newText.splice(idx, 1, "_");
         // bitmapText.text = newText.join("");
@@ -123,7 +161,8 @@ export class RenderingEngine {
   }
 
   add(sprite: Container) {
-    this.app.stage.addChild(sprite);
+    // this.app.stage.addChild(sprite);
+    this.entities.addChild(sprite);
   }
 
   remove(sprite: Container) {
@@ -153,7 +192,8 @@ export class RenderingEngine {
           { item: 68, weight: 1 },
         ]);
         sprite = this.getSprite(`clasic:${tile}`);
-        this.app.stage.addChild(sprite);
+        // this.app.stage.addChild(sprite);
+        this.background.addChild(sprite);
 
         // sprite = new BitmapText({
         //   text: "#",
@@ -184,7 +224,8 @@ export class RenderingEngine {
         //     fontSize: 12,
         //   },
         // });
-        this.app.stage.addChild(sprite);
+        // this.app.stage.addChild(sprite);
+        this.background.addChild(sprite);
         return new Tile(
           {
             seen: false,
@@ -197,6 +238,35 @@ export class RenderingEngine {
           0.5,
         );
     }
+  }
+
+  screenShake(duration = 500, size = 10) {
+    let totalDuration = 0;
+    let toDelete = false;
+    this.app.stage.pivot = 0.5;
+    const cb: TickerCallback<any> = (ticker) => {
+      const elapsed = ticker.deltaMS;
+      totalDuration += elapsed;
+      if (toDelete) {
+        this.app.ticker.remove(cb);
+      }
+      if (totalDuration >= duration) {
+        // this.app.stage.x = 0;
+        // this.app.stage.y = 0;
+        this.app.stage.updateTransform({
+          x: 0,
+          y: 0,
+        });
+        toDelete = true;
+        return;
+      }
+
+      this.app.stage.updateTransform({
+        x: rng.int(-size, size),
+        y: rng.int(-size, size),
+      });
+    };
+    this.app.ticker.add(cb);
   }
 }
 

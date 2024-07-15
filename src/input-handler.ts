@@ -1,5 +1,5 @@
 import { engine } from "./engine";
-import { Entity } from "./entity";
+import { Actor, Entity } from "./entity";
 
 export interface Action {
   perform: (entity: Entity) => void;
@@ -14,7 +14,7 @@ abstract class MovementAction implements Action {
   abstract perform(entity: Entity): void;
 }
 
-class WalkAction extends MovementAction {
+export class WalkAction extends MovementAction {
   perform(entity: Entity) {
     const { dx, dy } = this;
     const nextx = entity.x + this.dx;
@@ -23,37 +23,43 @@ class WalkAction extends MovementAction {
     const outOfBounds = !engine.gameMap.isInBounds({ x: nextx, y: nexty });
     const hitsWall = !engine.gameMap.tiles[nexty][nextx].flags.walkable;
     if (outOfBounds || hitsWall) {
-      if (!entity.isMoving) {
-        entity.displayX += dx / 2;
-        entity.displayY += dy / 2;
-      }
+      entity.displayX += dx / 2;
+      entity.displayY += dy / 2;
       return;
     }
 
-    if (!entity.isMoving) {
-      entity.x += dx;
-      entity.y += dy;
-    }
+    entity.x += dx;
+    entity.y += dy;
   }
 }
 
-class HitAction extends MovementAction {
-  perform(entity: Entity) {
+export class HitAction extends MovementAction {
+  perform(entity: Actor) {
     const { dx, dy } = this;
     const nextx = entity.x + this.dx;
     const nexty = entity.y + this.dy;
 
-    const target = engine.gameMap.entityBlockingWay(nextx, nexty);
+    const target = engine.gameMap.getActorAtLocation(nextx, nexty);
 
     if (!target) {
       return;
     }
 
-    if (!entity.isMoving) {
-      entity.displayX += dx / 2;
-      entity.displayY += dy / 2;
+    const damage = entity.fighter.power - target.fighter.defense;
+    const attackDescription = `${entity.name.toUpperCase()} attacks ${
+      target.name
+    }`;
+
+    if (damage > 0) {
+      console.log(`${attackDescription} for ${damage} hit points.`);
+      target.fighter.hp -= damage;
+    } else {
+      console.log(`${attackDescription} but does no damage.`);
     }
-    console.log(`You hit ${target.name}`);
+
+    entity.displayX += dx / 2;
+    entity.displayY += dy / 2;
+    engine.renderer.screenShake(100, 2);
   }
 }
 
@@ -63,19 +69,28 @@ class BumpAction extends MovementAction {
     const nextx = entity.x + this.dx;
     const nexty = entity.y + this.dy;
 
-    if (engine.gameMap.entityBlockingWay(nextx, nexty)) {
-      return new HitAction(dx, dy).perform(entity);
+    if (engine.gameMap.getActorAtLocation(nextx, nexty)) {
+      return new HitAction(dx, dy).perform(entity as Actor);
     } else {
       return new WalkAction(dx, dy).perform(entity);
     }
   }
 }
 
+export class WaitAction implements Action {
+  perform(_entity: Entity) {}
+}
+
 const movements: Record<string, Action> = {
-  a: new BumpAction(-1, 0),
-  d: new BumpAction(1, 0),
+  q: new BumpAction(-1, -1),
   w: new BumpAction(0, -1),
-  s: new BumpAction(0, 1),
+  e: new BumpAction(1, -1),
+  a: new BumpAction(-1, 0),
+  s: new WaitAction(),
+  d: new BumpAction(1, 0),
+  z: new BumpAction(-1, 1),
+  x: new BumpAction(0, 1),
+  c: new BumpAction(1, 1),
 };
 
 export function handleInput(ev: KeyboardEvent) {

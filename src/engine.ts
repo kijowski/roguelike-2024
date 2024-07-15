@@ -1,5 +1,5 @@
-import { handleInput } from "./input-handler";
-import { Entity, spawnPlayer } from "./entity";
+import { Action, handleInput } from "./input-handler";
+import { Actor, spawnPlayer } from "./entity";
 import { generateDungeon } from "./procgen";
 import { GameMap } from "./map";
 import { RenderingEngine } from "./graphics";
@@ -10,7 +10,9 @@ export class Engine {
   static readonly MaxEnemiesPerRoom = 3;
   renderer!: RenderingEngine;
   gameMap!: GameMap;
-  player!: Entity;
+  player!: Actor;
+
+  nextAction: Action | null = null;
 
   constructor() {
     this.renderer = new RenderingEngine();
@@ -34,30 +36,35 @@ export class Engine {
       this.gameMap.startingPos.x,
       this.gameMap.startingPos.y,
     );
+    this.gameMap.entities.push(this.player);
+    this.gameMap.updateFov(this.player);
 
     let lag = 0;
     const MS_PER_UPDATE = (1 / 120) * 1000;
+    this.renderer.app.ticker.maxFPS = 120;
     this.renderer.addTicker((ticker) => {
       const elapsed = ticker.deltaMS;
       // Input is processed in event system
       lag += elapsed;
 
       while (lag > MS_PER_UPDATE) {
-        this.player.update();
-        // this.handleEnemyTurns();
-        this.gameMap.updateFov(this.player);
-        this.gameMap.update();
+        const action = this.nextAction;
+        if (action) {
+          action.perform(this.player);
+          this.gameMap.updateFov(this.player);
+          this.nextAction = null;
+          this.handleEnemyTurns();
+        }
         lag -= MS_PER_UPDATE;
       }
+      this.gameMap.render();
       // Rendering step is implicit
       // this.render(lag / MS_PER_UPDATE); // pass lag / MS_PER_UPDATE
     });
   }
   handleEnemyTurns() {
-    this.gameMap.nonPlayerEntities.forEach((e) => {
-      console.log(
-        `The ${e.name} wonders when it will get to take a real turn.`,
-      );
+    this.gameMap.actors.forEach((e) => {
+      e.ai?.perform(e);
     });
   }
 
@@ -65,10 +72,16 @@ export class Engine {
     const action = handleInput(ev);
 
     if (action) {
-      this.player.actions.push(action);
-    } else if (ev.key === "x") {
+      if (this.player.fighter.hp > 0) {
+        if (!this.nextAction) {
+          this.nextAction = action;
+        }
+      }
+    } else if (ev.key === "o") {
       localStorage.removeItem("seed");
       window.location.reload();
+    } else if (ev.key === "k") {
+      this.renderer.screenShake();
     }
   }
 }
