@@ -23,21 +23,13 @@ export abstract class BaseAI implements Action {
       return engine.gameMap.tiles[y][x].flags.walkable && !blocks;
     };
 
-    for (const item of this.path) {
-      engine.gameMap.tiles[item.y][item.x].recolor();
-    }
-
     this.path = [];
 
     const dijkstra = new rot.Path.Dijkstra(destX, destY, isPassable, {
-      topology: 4,
+      topology: 8,
     });
 
     dijkstra.compute(entity.x, entity.y, (x, y) => this.path.push({ x, y }));
-    for (const item of this.path) {
-      engine.gameMap.tiles[item.y][item.x].recolor("#f00");
-    }
-    // this.path.shift();
   }
 }
 
@@ -57,8 +49,6 @@ export class HostileEnemy extends BaseAI {
 
     if (this.path.length > 1) {
       const { x: destX, y: destY } = this.path[1];
-      const ownTile = this.path.shift()!;
-      engine.gameMap.tiles[ownTile.y][ownTile.x].recolor();
       return new WalkAction(destX - entity.x, destY - entity.y).perform(entity);
     }
 

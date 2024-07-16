@@ -41,9 +41,9 @@ export class Fighter implements BaseComponent {
       }
     }
 
-    this.entity.sprite.tint = "#bf0000";
-    this.entity.sprite.alpha = 0.8;
-    this.entity.sprite.zIndex = -1;
+    this.entity.display.sprite.tint = "#bf0000";
+    this.entity.display.sprite.alpha = 0.8;
+    this.entity.display.sprite.zIndex = -1;
     this.entity.blocksMovement = false;
     this.entity.ai = null;
     this.entity.name = `Remains of ${this.entity.name}`;

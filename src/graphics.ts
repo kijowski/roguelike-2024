@@ -93,9 +93,6 @@ export class RenderingEngine {
     this.app.stage.addChild(this.entities);
     this.app.stage.addChild(this.entities);
 
-    // const glitch = new GlitchFilter({ offset: 100 });
-    // this.app.stage.filters = [glitch];
-
     document.body.appendChild(this.app.canvas);
 
     TextureStyle.defaultOptions.scaleMode = "nearest";
@@ -111,57 +108,9 @@ export class RenderingEngine {
       "CozetteMini/CozetteMini.xml",
     ]);
 
-    const text = "Welcome!    ".split("");
-    const bitmapText = new BitmapText({
-      text: text.join(""),
-      style: {
-        fontFamily: "CozetteMini",
-        fontSize: 12,
-      },
-    });
-    // bitmapText.roundPixels = false;
-    // bitmapText.text = "Hey";
-    bitmapText.tint = "#af0";
-    bitmapText.x = 10;
-    bitmapText.y = 10;
-    bitmapText.scale = 2;
-    // bitmapText.resolution = 2;
-    this.app.stage.addChild(bitmapText);
-    let lag = 0;
-    const MS_PER_UPDATE = (1 / 8) * 1000;
-    let idx = 0;
-
-    this.app.ticker.add((ticker) => {
-      const elapsed = ticker.deltaMS;
-      // processInput
-      lag += elapsed;
-
-      while (lag > MS_PER_UPDATE) {
-        // bitmapText.x += 1;
-        idx += 1;
-        idx = idx % text.length;
-        bitmapText.text = [...text.slice(idx), ...text.slice(0, idx)].join("");
-        bitmapText.text =
-          engine.player.fighter.hp > 0
-            ? `HP: ${engine.player.fighter.hp}. x:${engine.player.x}:${engine.player.displayX} y:${engine.player.y}:${engine.player.displayY}`
-            : "DEAD :X";
-        // glitch.offset = Math.max(0, glitch.offset - 10);
-
-        // this.app.stage.scale = this.app.stage.scale.x * 1.01;
-        // this.app.stage.x += 1;
-        // const newText = [...text.slice()];
-        // newText.splice(idx, 1, "_");
-        // bitmapText.text = newText.join("");
-
-        // bitmapText.scale = bitmapText.scale.x + 0.01;
-        // bitmapText.text = lag;
-        lag -= MS_PER_UPDATE;
-      }
-    });
   }
 
   add(sprite: Container) {
-    // this.app.stage.addChild(sprite);
     this.entities.addChild(sprite);
   }
 
@@ -192,17 +141,7 @@ export class RenderingEngine {
           { item: 68, weight: 1 },
         ]);
         sprite = this.getSprite(`clasic:${tile}`);
-        // this.app.stage.addChild(sprite);
         this.background.addChild(sprite);
-
-        // sprite = new BitmapText({
-        //   text: "#",
-        //   style: {
-        //     fontFamily: "CozetteVector",
-        //     fontSize: 12,
-        //   },
-        // });
-        // this.app.stage.addChild(sprite);
         return new Tile(
           {
             seen: false,
@@ -215,16 +154,6 @@ export class RenderingEngine {
         );
       case "wall":
         sprite = this.getSprite(`clasic:56`);
-        // this.add(sprite);
-
-        // sprite = new BitmapText({
-        //   text: "#",
-        //   style: {
-        //     fontFamily: "CozetteVector",
-        //     fontSize: 12,
-        //   },
-        // });
-        // this.app.stage.addChild(sprite);
         this.background.addChild(sprite);
         return new Tile(
           {
@@ -243,7 +172,8 @@ export class RenderingEngine {
   screenShake(duration = 500, size = 10) {
     let totalDuration = 0;
     let toDelete = false;
-    this.app.stage.pivot = 0.5;
+    const shaking = this.app.stage;
+    // const shaking = this.background;
     const cb: TickerCallback<any> = (ticker) => {
       const elapsed = ticker.deltaMS;
       totalDuration += elapsed;
@@ -251,9 +181,7 @@ export class RenderingEngine {
         this.app.ticker.remove(cb);
       }
       if (totalDuration >= duration) {
-        // this.app.stage.x = 0;
-        // this.app.stage.y = 0;
-        this.app.stage.updateTransform({
+        shaking.updateTransform({
           x: 0,
           y: 0,
         });
@@ -261,9 +189,87 @@ export class RenderingEngine {
         return;
       }
 
-      this.app.stage.updateTransform({
+      shaking.updateTransform({
         x: rng.int(-size, size),
         y: rng.int(-size, size),
+      });
+    };
+    this.app.ticker.add(cb);
+  }
+
+  bounce(duration = 200, size = 1000) {
+    let totalDuration = 0;
+    let toDelete = false;
+    const shaking = this.app.stage;
+    // const shaking = this.background;
+    // shaking.pivot = 0.5;
+
+    const cb: TickerCallback<any> = (ticker) => {
+      const elapsed = ticker.deltaMS;
+      totalDuration += elapsed;
+      if (toDelete) {
+        this.app.ticker.remove(cb);
+      }
+      let percentDone = totalDuration / duration;
+      if (percentDone > 0.5) percentDone = 1 - percentDone;
+      if (totalDuration >= duration) {
+        // this.app.stage.x = 0;
+        // this.app.stage.y = 0;
+        shaking.updateTransform({
+          y: 0,
+        });
+        // shaking.
+        toDelete = true;
+        return;
+      }
+
+      shaking.updateTransform({
+        y: shaking.x + percentDone * size, //rng.float(-size, size),
+      });
+    };
+    this.app.ticker.add(cb);
+  }
+
+  roll(duration = 500, amount = Math.PI * 2) {
+    let totalDuration = 0;
+    let toDelete = false;
+    const shaking = this.app.stage;
+    // const shaking = this.background;
+    shaking.pivot = { x: 1200 / 2, y: 960 / 2 };
+
+    const cb: TickerCallback<any> = (ticker) => {
+      const elapsed = ticker.deltaMS;
+      totalDuration += elapsed;
+      if (toDelete) {
+        this.app.ticker.remove(cb);
+      }
+      const percentDone = totalDuration / duration;
+      if (totalDuration >= duration) {
+        // this.app.stage.x = 0;
+        // this.app.stage.y = 0;
+        shaking.updateTransform({
+          rotation: 0,
+          // scaleX: 1,
+          // scaleY: 1,
+          pivotX: 0,
+          pivotY: 0,
+          x: 0,
+          y: 0,
+        });
+        // shaking.
+        toDelete = true;
+        return;
+      }
+
+      shaking.updateTransform({
+        rotation: percentDone * amount,
+        x: 600,
+        y: 480,
+        // scaleX: 1 - percentDone,
+        // scaleY: 1 - percentDone,
+
+        // y: shaking.x + percentDone * size, //rng.float(-size, size),
+        // scaleY: 1 + rng.float(-size, size),
       });
     };
     this.app.ticker.add(cb);

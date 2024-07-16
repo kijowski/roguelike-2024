@@ -34,8 +34,8 @@ export class GameMap {
       }
     }
     for (const entity of this.entities) {
-      entity.sprite.visible = this.tiles[entity.y][entity.x].flags.visible;
-      // entity.sprite.visible = true;
+      entity.display.sprite.visible =
+        this.tiles[entity.y][entity.x].flags.visible;
       entity.render();
     }
   }

@@ -23,13 +23,16 @@ export class WalkAction extends MovementAction {
     const outOfBounds = !engine.gameMap.isInBounds({ x: nextx, y: nexty });
     const hitsWall = !engine.gameMap.tiles[nexty][nextx].flags.walkable;
     if (outOfBounds || hitsWall) {
-      entity.displayX += dx / 2;
-      entity.displayY += dy / 2;
+      entity.display.displayX += dx / 2;
+      entity.display.displayY += dy / 2;
       return;
     }
 
+    entity.display.displayX += dx / 2;
+    entity.display.displayY += dy / 2;
     entity.x += dx;
     entity.y += dy;
+    // entity.display.angle += 90 * dx + 90 * dy;
   }
 }
 
@@ -57,8 +60,9 @@ export class HitAction extends MovementAction {
       console.log(`${attackDescription} but does no damage.`);
     }
 
-    entity.displayX += dx / 2;
-    entity.displayY += dy / 2;
+    entity.display.displayX += dx / 2;
+    entity.display.displayY += dy / 2;
+
     engine.renderer.screenShake(100, 2);
   }
 }

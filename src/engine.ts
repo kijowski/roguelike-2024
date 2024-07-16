@@ -82,6 +82,11 @@ export class Engine {
       window.location.reload();
     } else if (ev.key === "k") {
       this.renderer.screenShake();
+    } else if (ev.key === "l") {
+      this.renderer.bounce();
+    } else if (ev.key === ";") {
+      // this.renderer.roll();
+      this.renderer.roll(500, Math.PI * 6);
     }
   }
 }
