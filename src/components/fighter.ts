@@ -48,6 +48,6 @@ export class Fighter implements BaseComponent {
     this.entity.ai = null;
     this.entity.name = `Remains of ${this.entity.name}`;
 
-    console.log(deathMessage);
+    engine.messageLog.addMessage(deathMessage);
   }
 }

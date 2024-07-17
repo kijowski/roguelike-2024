@@ -1,5 +1,5 @@
 import { FOV } from "rot-js";
-import { Tile } from "./graphics";
+import { RenderingEngine, Tile } from "./graphics";
 import { Actor, Entity } from "./entity";
 import { engine } from "./engine";
 
@@ -15,12 +15,20 @@ export class GameMap {
     this.startingPos = { x: 0, y: 0 };
     this.entities = [];
     for (let rowNo = 0; rowNo < height; rowNo++) {
-      const row = new Array(width);
+      const row: Tile[] = new Array(width);
       for (let colNo = 0; colNo < width; colNo++) {
         row[colNo] = engine.renderer.getTile("wall");
       }
       this.tiles[rowNo] = row;
     }
+  }
+
+  handleMouse({ x, y }: { x: number; y: number }) {
+    const row = Math.floor(x / RenderingEngine.TileSize);
+    const col = Math.floor(y / RenderingEngine.TileSize);
+    console.log(row + ":" + col);
+    this.tiles[row][col].recolor("#ff0");
+    console.log(this.getActorAtLocation(row, col));
   }
 
   isInBounds({ x, y }: { x: number; y: number }) {

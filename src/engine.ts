@@ -3,6 +3,7 @@ import { Actor, spawnPlayer } from "./entity";
 import { generateDungeon } from "./procgen";
 import { GameMap } from "./map";
 import { RenderingEngine } from "./graphics";
+import { MessageLog } from "./message-log";
 
 export class Engine {
   static readonly Height = 60;
@@ -14,8 +15,11 @@ export class Engine {
 
   nextAction: Action | null = null;
 
+  messageLog!: MessageLog;
+
   constructor() {
     this.renderer = new RenderingEngine();
+    this.messageLog = new MessageLog();
   }
   async setup() {
     await this.renderer.setup();

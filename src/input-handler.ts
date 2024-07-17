@@ -23,6 +23,7 @@ export class WalkAction extends MovementAction {
     const outOfBounds = !engine.gameMap.isInBounds({ x: nextx, y: nexty });
     const hitsWall = !engine.gameMap.tiles[nexty][nextx].flags.walkable;
     if (outOfBounds || hitsWall) {
+      engine.messageLog.addMessage("You hit a wall");
       entity.display.displayX += dx / 2;
       entity.display.displayY += dy / 2;
       return;
@@ -44,7 +45,7 @@ export class HitAction extends MovementAction {
 
     const target = engine.gameMap.getActorAtLocation(nextx, nexty);
 
-    if (!target) {
+    if (!target || target.fighter.hp <= 0) {
       return;
     }
 
@@ -54,10 +55,12 @@ export class HitAction extends MovementAction {
     }`;
 
     if (damage > 0) {
-      console.log(`${attackDescription} for ${damage} hit points.`);
+      engine.messageLog.addMessage(
+        `${attackDescription} for ${damage} hit points.`,
+      );
       target.fighter.hp -= damage;
     } else {
-      console.log(`${attackDescription} but does no damage.`);
+      engine.messageLog.addMessage(`${attackDescription} but does no damage.`);
     }
 
     entity.display.displayX += dx / 2;

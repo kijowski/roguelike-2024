@@ -70,6 +70,7 @@ export class RenderingEngine {
   app!: Application;
   spriteSheet!: Spritesheet;
 
+  ui!: Container;
   background!: Container;
   entities!: Container;
   corpses!: Container;
@@ -77,7 +78,7 @@ export class RenderingEngine {
   async setup() {
     this.app = new Application();
     await this.app.init({
-      width: 960,
+      width: 1200,
       height: 960,
       antialias: false,
       autoDensity: true,
@@ -88,10 +89,12 @@ export class RenderingEngine {
     this.background = new Container();
     this.entities = new Container();
     this.corpses = new Container();
+    this.ui = new Container({ x: 960 });
 
     this.app.stage.addChild(this.background);
     this.app.stage.addChild(this.entities);
     this.app.stage.addChild(this.entities);
+    this.app.stage.addChild(this.ui);
 
     document.body.appendChild(this.app.canvas);
 
@@ -108,6 +111,8 @@ export class RenderingEngine {
       "CozetteMini/CozetteMini.xml",
     ]);
 
+    this.ui.addChild(this.showHealth());
+    this.ui.addChild(this.showMessageLog());
   }
 
   add(sprite: Container) {
@@ -141,6 +146,11 @@ export class RenderingEngine {
           { item: 68, weight: 1 },
         ]);
         sprite = this.getSprite(`clasic:${tile}`);
+
+        sprite.eventMode = "static";
+        sprite.on("pointerover", (ev) => {
+          engine.gameMap.handleMouse(ev.getLocalPosition(this.app.stage));
+        });
         this.background.addChild(sprite);
         return new Tile(
           {
@@ -273,6 +283,90 @@ export class RenderingEngine {
       });
     };
     this.app.ticker.add(cb);
+  }
+
+  showHealth() {
+    const bar = new Container({ x: 10, y: 10 });
+    const texture = this.spriteSheet.textures["clasic:77"];
+    const size = RenderingEngine.TileSize;
+
+    for (let i = 0; i < 10; i++) {
+      const sprite = new Sprite({
+        x: i * size,
+        y: 0,
+        width: size,
+        height: size,
+        texture,
+        tint: "#f00",
+        roundPixels: false,
+      });
+
+      bar.addChild(sprite);
+    }
+    const hpText = new BitmapText({
+      text: "HP: ",
+      style: {
+        fontFamily: "CozetteMini",
+        fontSize: 12,
+      },
+      x: 0,
+      y: size,
+    });
+
+    bar.addChild(hpText);
+
+    this.app.ticker.add(() => {
+      const { hp, maxHp } = engine.player.fighter;
+      const percentTens = Math.floor((hp / maxHp) * 10);
+      hpText.text = hp > 0 ? `HP:${hp}/${maxHp}` : "DEAD";
+      for (let i = 0; i < 10; i++) {
+        bar.getChildAt(i).tint = i > percentTens ? "#700" : "#f00";
+      }
+    });
+
+    return bar;
+  }
+
+  showMessageLog() {
+    const bar = new Container({ x: 10, y: 80 });
+
+    const latest = engine.messageLog.takeLatest();
+    let y = 0;
+    for (const line of latest) {
+      const messageSprite = new BitmapText({
+        text: line,
+        style: {
+          fontFamily: "CozetteMini",
+          fontSize: 12,
+        },
+        x: 0,
+        y,
+      });
+      y += RenderingEngine.TileSize + messageSprite.height;
+      bar.addChild(messageSprite);
+    }
+
+    this.app.ticker.add(() => {
+      const latest = engine.messageLog.takeLatest();
+      bar.removeChildren();
+
+      let y = 0;
+      for (const line of latest) {
+        const messageSprite = new BitmapText({
+          text: line,
+          style: {
+            fontFamily: "CozetteMini",
+            fontSize: 12,
+          },
+          x: 0,
+          y,
+        });
+        y += RenderingEngine.TileSize + messageSprite.height;
+        bar.addChild(messageSprite);
+      }
+    });
+
+    return bar;
   }
 }
 
